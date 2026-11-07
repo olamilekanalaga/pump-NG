@@ -3,8 +3,9 @@ import { Prisma } from '@prisma/client';
 import { db } from './db';
 import { D, sale } from './domain';
 import { syncTankAlerts } from './stock-alerts';
+import { fuelCode } from './fuels';
 const amount=(places:number)=>z.string().regex(new RegExp(`^\\d+(\\.\\d{1,${places}})?$`)).refine(v=>D(v).gt(0)&&D(v).lt('1000000000'),'Amount out of range');
-export const transactionSchema=z.object({external_transaction_id:z.string().min(1).max(100),station_id:z.string().min(1).max(60),pump_id:z.string().min(1).max(60),nozzle_id:z.string().min(1).max(60),fuel_type:z.string().min(1).max(20),litres:amount(3),price_per_litre:amount(2).optional(),sale_value:amount(2).optional(),started_at:z.iso.datetime().optional(),completed_at:z.iso.datetime(),source:z.enum(['simulator','external-api','mock-forecourt'])});
+export const transactionSchema=z.object({external_transaction_id:z.string().min(1).max(100),station_id:z.string().min(1).max(60),pump_id:z.string().min(1).max(60),nozzle_id:z.string().min(1).max(60),fuel_type:z.string().min(1).max(20).transform(fuelCode),litres:amount(3),price_per_litre:amount(2).optional(),sale_value:amount(2).optional(),started_at:z.iso.datetime().optional(),completed_at:z.iso.datetime(),source:z.enum(['simulator','external-api','mock-forecourt'])});
 export type TransactionPayload=z.infer<typeof transactionSchema>;
 export type IngestionResult={status:string;eventId:string;transactionId?:string;error?:string};
 export async function ingest(raw: unknown,replayOf?:string):Promise<IngestionResult> {

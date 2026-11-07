@@ -209,3 +209,17 @@ Use a current real timestamp and registered nozzle IDs belonging to the station/
 Current estimates flag missing readings/mappings, impossible balances, source outages and stale readings. They do not prove theft, account for unreported deliveries, or substitute for tank-gauge calibration and transaction completeness. Missing tank data is displayed as awaiting data rather than invented stock. Browser demo tanks are explicitly simulated, including a low-stock example and a simulated refill action.
 
 Apply `202611070003_tank_stock_alerts` before running the updated PostgreSQL backend. Run `npm test` for reporting/ingestion/inventory tests and `node --import tsx scripts/owner-check.ts` for the owner-workspace browser check. Set `DEMO_BASE_URL` to test the deployed `/demo` route.
+
+## Read-only fuels and notifications
+
+Fuel names shown to owners are **Petroleum**, **Kerosene** and **Diesel**. Existing provider codes PMS/DPK/AGO remain valid; the ingestion API also normalises the human-readable names to those codes. New development seeds include three products and twelve nozzles. Previously saved browser workspaces gain Kerosene history without replacing existing sales.
+
+The visible application has no sale, meter, price, refill or station data-entry forms. Settings now shows read-only station details, prices and registered nozzles. Only filters and business-question inputs remain. Operational writes arrive through authenticated ingestion APIs; administrative setup endpoints remain protected for deployment/integration setup.
+
+The notification bell shows:
+
+- A per-tank reorder message at the configured low-stock threshold (80% depletion / 20% remaining by default), with fuel name and remaining litres.
+- A sales-growth message when today's calculated naira sales are at least twice yesterday's full-day total. The percentage is calculated from recorded values; no percentage is invented if yesterday has no recorded sales.
+- Today's recorded litres and calculated naira sales, independently of the dashboard's date filter.
+
+Notifications refresh every ten seconds and can be marked read; read state is stored per station on the device. Selecting a message opens the owner overview. `GET /api/notifications?station=ST001` requires the owner session in the PostgreSQL application. The browser preview uses the same notification calculations over its isolated records. Notification CSV export is available alongside the other datasets. These are in-app messages, not external email/SMS delivery.
