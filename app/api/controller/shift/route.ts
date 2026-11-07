@@ -1,0 +1,4 @@
+import { stationController } from '@/lib/controller-auth';
+import { shiftData,updateShift } from '@/lib/shift-service';
+export async function GET(request:Request){try{const p=new URL(request.url).searchParams,stationId=p.get('station')??'ST001';await stationController(request,stationId);return Response.json(await shiftData(stationId,p.get('start')??'',p.get('end')??'',p.get('open')==='true'));}catch(e){return Response.json({error:(e as Error).message},{status:/Unauthorised|access|permission/.test((e as Error).message)?403:400});}}
+export async function POST(request:Request){try{const raw=await request.json();const actor=await stationController(request,String(raw.stationId));return Response.json(await updateShift(raw,actor));}catch(e){return Response.json({error:(e as Error).message},{status:/Unauthorised|access|permission/.test((e as Error).message)?403:400});}}

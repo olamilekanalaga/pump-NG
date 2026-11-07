@@ -13,7 +13,7 @@ export async function POST(request:Request){if(!await authorised(request))return
  if(p.action==='pump')result=await db.dispenser.create({data:{stationId:p.stationId,code:p.code}});
  if(p.action==='nozzle'){const pump=await db.dispenser.findUniqueOrThrow({where:{stationId_code:{stationId:p.stationId,code:p.pump}}});result=await db.nozzle.create({data:{dispenserId:pump.id,code:p.code,productId:p.product}});}
  if(p.action==='product')result=await db.fuelProduct.create({data:{id:p.id,name:p.name}});
- if(p.action==='price')result=await db.fuelPriceHistory.create({data:{productId:p.product,price:p.price,effectiveAt:new Date(p.effectiveAt)}});
+ if(p.action==='price')throw new Error('Use the station controller Fuel prices section; global price edits are disabled');
  if(p.action==='mode')result=await db.integrationConfiguration.upsert({where:{stationId_adapter:{stationId:p.stationId,adapter:'simulator'}},create:{stationId:p.stationId,adapter:'simulator',mode:p.mode},update:{mode:p.mode}});
  if(p.action==='snapshot'){if(['RESET','REPLACEMENT','CORRECTION'].includes(p.kind)&&!p.exception)throw new Error('Exception reason is required');result=await db.meterSnapshot.create({data:{nozzleId:p.nozzleId,cumulativeLitres:p.value,recordedAt:new Date(p.recordedAt),kind:p.kind,origin:'manual',exception:p.exception}});}
  return Response.json({ok:true,result});}catch(e){return Response.json({error:(e as Error).message},{status:400});}}

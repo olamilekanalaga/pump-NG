@@ -18,6 +18,8 @@ model User {
  email String @unique
  organisationId String
  organisation Organisation @relation(fields:[organisationId],references:[id])
+ priceChanges StationFuelPrice[]
+ shifts ShiftReconciliation[]
  role String @default("ADMIN")
  createdAt DateTime @default(now())
 }
@@ -34,6 +36,7 @@ model Station {
  tanks FuelTank[]
  deliveries FuelDelivery[]
  sellingPrices StationFuelPrice[]
+ shifts ShiftReconciliation[]
  createdAt DateTime @default(now())
 }
 model Dispenser {
@@ -229,6 +232,10 @@ model StationFuelPrice {
  ingestedAt DateTime @default(now())
  @@unique([sourceId,externalId])
  @@index([stationId,productId,effectiveAt])
+ origin String @default("PROVIDER")
+ createdById String?
+ createdBy User? @relation(fields:[createdById],references:[id])
+ createdByLabel String @default("Provider")
 }
 
 model WorkspaceProfile {
@@ -239,4 +246,23 @@ model WorkspaceProfile {
  phone String @default("")
  preferences Json
  updatedAt DateTime @updatedAt
+}
+
+model ShiftReconciliation {
+ id String @id @default(cuid())
+ stationId String
+ station Station @relation(fields:[stationId],references:[id])
+ startAt DateTime
+ endAt DateTime
+ cashReceived Decimal? @db.Decimal(18,2)
+ posReceived Decimal? @db.Decimal(18,2)
+ transferReceived Decimal? @db.Decimal(18,2)
+ expectedSales Decimal? @db.Decimal(18,2)
+ calculation Json?
+ lockedAt DateTime?
+ createdById String?
+ createdBy User? @relation(fields:[createdById],references:[id])
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([stationId,startAt,endAt])
 }

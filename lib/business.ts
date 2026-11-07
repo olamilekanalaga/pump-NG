@@ -39,7 +39,7 @@ export function answerBusiness(question:string,report:BusinessReport){
  const q=question.toLowerCase().trim(),coverage=`${report.from} to ${report.to}`;
  if(!q)return 'Ask about sales, litres, pumps, meters or stock.';
  if(/profit|customer|attendance|salary|expense|bank balance|theft/.test(q))return 'Unavailable from pump records.';
- if(/\bpos\b|card|cash|transfer|collection|settlement/.test(q))return 'Payment collections are not tracked.';
+ if(/\bpos\b|card|cash|transfer|collection|settlement/.test(q))return 'Payments are not tracked by pump transactions. See Reports → Shift for controller-recorded cash, POS and transfer receipts.';
  if(isDeliveryQuestion(q)){const selected=questionFuel(q);return (selected?[selected]:['PMS','AGO','DPK']).map(product=>{const d=report.deliveryStates.find(d=>d.product===product);if(!d?.receivedAt)return `${fuelName(product)}: no received delivery recorded.`;return `${fuelName(product)} · since delivery ${new Date(d.receivedAt).toLocaleString('en-NG',{timeZone:'Africa/Lagos'})}: ${d.dispensedSince} L sold · ₦${d.salesSince} calculated sales · ${d.transactionCount} purchases.`;}).join('\n');}
  if(/stock|remaining|reorder|80%|tank/.test(q))return report.stocks.length?report.stocks.map(t=>`${t.name}: ${t.remaining??'unknown'} L remaining · ${t.reorder?'REORDER':t.needsReview?'Check readings':'Stock available'}`).join('\n'):'Awaiting tank readings and nozzle mapping.';
  if(/error|reject|offline|queued/.test(q))return `${coverage}: ${report.events.filter(e=>e.status==='REJECTED').length} rejected · ${report.events.filter(e=>e.status==='QUEUED').length} queued.`;

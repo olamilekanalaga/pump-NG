@@ -28,7 +28,8 @@ export async function ingest(raw: unknown,replayOf?:string):Promise<IngestionRes
  if(!nozzle||nozzle.productId!==p.fuel_type) throw new Error('Unknown station/pump/nozzle or fuel product mismatch');
  const completedAt=new Date(p.completed_at);
  const branchPrice=await tx.stationFuelPrice.findFirst({where:{stationId:p.station_id,productId:p.fuel_type,effectiveAt:{lte:completedAt}},orderBy:{effectiveAt:'desc'}});
- const effective=p.price_per_litre??branchPrice?.price.toFixed(2)??(await tx.fuelPriceHistory.findFirst({where:{productId:p.fuel_type,effectiveAt:{lte:completedAt}},orderBy:{effectiveAt:'desc'}}))?.price.toFixed(2);
+ const controllerPrice=await tx.stationFuelPrice.findFirst({where:{stationId:p.station_id,productId:p.fuel_type,origin:'CONTROLLER',effectiveAt:{lte:completedAt}},orderBy:[{effectiveAt:'desc'},{ingestedAt:'desc'}]});
+ const effective=p.price_per_litre??controllerPrice?.price.toFixed(2)??branchPrice?.price.toFixed(2)??(await tx.fuelPriceHistory.findFirst({where:{productId:p.fuel_type,effectiveAt:{lte:completedAt}},orderBy:{effectiveAt:'desc'}}))?.price.toFixed(2);
  if(!effective)throw new Error('No effective fuel price is configured for this transaction');
  const calculated=sale(p.litres,effective);
  if(p.sale_value&&!calculated.eq(p.sale_value))throw new Error('Sale value does not equal rounded litres × effective price');
