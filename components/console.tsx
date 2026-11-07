@@ -15,7 +15,7 @@ import { fuelName } from '@/lib/fuels';
 import type { analytics } from '@/lib/analytics';
 type Data=Awaited<ReturnType<typeof analytics>>;
 export type JsonData=Omit<Data,'sources'|'events'|'transactions'|'monitoring'|'products'> & {sources:Array<{id:string;name:string;mode:string;online:boolean;lastSuccessAt:string|null}>;events:Array<{id:string;status:string;raw:unknown;error:string|null;receivedAt:string;replayOf:string|null}>;transactions:Array<{id:string;externalId:string;station:string;pump:string;nozzle:string;product:string;startedAt:string|null;completedAt:string;litres:string;price:string;sales:string;source:string;ingestedAt:string;eventId:string}>;monitoring:Array<{id:string;pump:string;nozzle:string;product:string;opening:string|null;current:string|null;closing:string|null;meterVolume:string|null;litres:string;sales:string;price:string|null;lastUpdate:string|null;active:boolean;exception:string|null;difference:string|null}>;products:Array<{id:string;name:string;prices:Array<{price:string;effectiveAt:string}>}>};
-const nav=[['Sales & meters',Fuel],['Pump monitoring',Droplets],['Reports & analytics',ChartNoAxesCombined],['Ask',Search],['Settings & integrations',Settings]] as const;
+const nav=[['Sales & meters',Fuel],['Pump monitoring',Droplets],['Ask',Search],['Reports & analytics',ChartNoAxesCombined],['Settings & integrations',Settings]] as const;
 const number=(v:string|number,d=0)=>Number(v).toLocaleString('en-NG',{minimumFractionDigits:d,maximumFractionDigits:d});
 const money=(v:string|number)=>`₦${number(v,2)}`;
 const time=(v:string|null)=>v?new Date(v).toLocaleString('en-NG',{timeZone:'Africa/Lagos',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'No reading';

@@ -288,3 +288,8 @@ Verification: `npm test` includes wallet value/quantity separation, unknown-read
 All activity filters, pagination, individual sale details and CSV export now live directly on Home. Bottom navigation has five destinations: Home, Meters, Reports, Ask and Settings. There is no separate Activity destination. Sign out is the last action in Profile and clears the authenticated session; in the isolated browser preview it exits the workspace without deleting stored preview records.
 
 Meters now use the same visible horizontal and vertical grid as Reports. Pump readings are cumulative **litres**, not delivery quantities or metres of distance. The owner-facing report “Pump readings vs recorded sales” compares closing minus opening cumulative litres with recorded transaction litres. Missing boundaries and resets remain explicit exceptions. “Sales by pump hose” groups totals by physical nozzle/hose identifier; individual purchases are listed in Home activity and do not imply identified customers.
+
+
+### Home view tabs
+
+Home defaults to Fuel balances, with Activity as a second underlined tab in the same page. The activity ledger is rendered only when selected; switching views preserves the chosen dates and activity filters. Both tabs support arrow-key navigation. Bottom navigation is Home, Meters, Ask, Reports, Settings.
