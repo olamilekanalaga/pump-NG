@@ -43,3 +43,5 @@ body,.content{background:var(--page);color:var(--ink)}h1,h2,h3,.heading h1,.top-
 
 /* Keep secondary text and chart labels legible in both themes. */
 .account-form label,.pricing-readings p{color:var(--muted)}.pricing-readings summary{color:var(--accent)}.wallet-dates{background:var(--surface);border-color:var(--border)}.recharts-cartesian-axis-tick tspan{fill:var(--muted)}
+
+.shift-workspace summary{color:var(--accent)}
