@@ -2,8 +2,8 @@ import { db } from './db';
 import { D,dayRange,meterDelta } from './domain';
 export async function analytics(stationId:string,date:string) {
  const {start,end}=dayRange(date);const isToday=new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Lagos'})===date;
- const stations=await db.station.findMany({orderBy:{name:'asc'}});
- const station=stations.find(s=>s.id===stationId);if(!station)throw new Error('Station not found');
+ const station=await db.station.findUnique({where:{id:stationId}});if(!station)throw new Error('Station not found');
+ const stations=await db.station.findMany({where:{organisationId:station.organisationId},orderBy:{name:'asc'}});
  const [pumps,transactions,sources,events,alerts,products,configuration]=await Promise.all([
  db.dispenser.findMany({where:{stationId},include:{nozzles:{include:{product:true,snapshots:{where:{recordedAt:{lte:end}},orderBy:{recordedAt:'desc'}}}}},orderBy:{code:'asc'}}),
  db.fuelTransaction.findMany({where:{nozzle:{dispenser:{stationId}},completedAt:{gte:start,lt:end}},include:{nozzle:{include:{dispenser:true}},source:true},orderBy:{completedAt:'desc'}}),

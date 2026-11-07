@@ -27,11 +27,13 @@ export async function ingest(raw: unknown,replayOf?:string):Promise<IngestionRes
  const nozzle=await tx.nozzle.findFirst({where:{code:p.nozzle_id,dispenser:{code:p.pump_id,stationId:p.station_id}},include:{product:true}});
  if(!nozzle||nozzle.productId!==p.fuel_type) throw new Error('Unknown station/pump/nozzle or fuel product mismatch');
  const completedAt=new Date(p.completed_at);
- const effective=p.price_per_litre??(await tx.fuelPriceHistory.findFirst({where:{productId:p.fuel_type,effectiveAt:{lte:completedAt}},orderBy:{effectiveAt:'desc'}}))?.price.toFixed(2);
+ const branchPrice=await tx.stationFuelPrice.findFirst({where:{stationId:p.station_id,productId:p.fuel_type,effectiveAt:{lte:completedAt}},orderBy:{effectiveAt:'desc'}});
+ const effective=p.price_per_litre??branchPrice?.price.toFixed(2)??(await tx.fuelPriceHistory.findFirst({where:{productId:p.fuel_type,effectiveAt:{lte:completedAt}},orderBy:{effectiveAt:'desc'}}))?.price.toFixed(2);
  if(!effective)throw new Error('No effective fuel price is configured for this transaction');
  const calculated=sale(p.litres,effective);
  if(p.sale_value&&!calculated.eq(p.sale_value))throw new Error('Sale value does not equal rounded litres × effective price');
  const record=await tx.fuelTransaction.create({data:{externalId:p.external_transaction_id,nozzleId:nozzle.id,sourceId:source.id,eventId:event.id,litres:D(p.litres),pricePerLitre:D(effective),saleValue:calculated,startedAt:p.started_at?new Date(p.started_at):null,completedAt}});
+ if(p.price_per_litre&&(!branchPrice||!branchPrice.price.eq(p.price_per_litre)))await tx.stationFuelPrice.create({data:{externalId:`TXN:${p.external_transaction_id}`,stationId:p.station_id,productId:p.fuel_type,sourceId:source.id,eventId:event.id,price:p.price_per_litre,effectiveAt:completedAt}});
  // Only simulated hardware manufactures meter readings. Real transactions require independent meter snapshots.
  if(p.source!=='external-api') {
  const latest=await tx.meterSnapshot.findFirst({where:{nozzleId:nozzle.id},orderBy:{recordedAt:'desc'}});

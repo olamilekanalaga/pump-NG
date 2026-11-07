@@ -31,6 +31,8 @@ model Station {
  configurations IntegrationConfiguration[]
  alerts OperationalAlert[]
  tanks FuelTank[]
+ deliveries FuelDelivery[]
+ sellingPrices StationFuelPrice[]
  createdAt DateTime @default(now())
 }
 model Dispenser {
@@ -60,6 +62,8 @@ model FuelProduct {
  nozzles Nozzle[]
  prices FuelPriceHistory[]
  tanks FuelTank[]
+ deliveries FuelDelivery[]
+ sellingPrices StationFuelPrice[]
 }
 model FuelPriceHistory {
  id String @id @default(cuid())
@@ -115,6 +119,8 @@ model IngestionSource {
  lastSuccessAt DateTime?
  transactions FuelTransaction[]
  snapshots MeterSnapshot[]
+ deliveries FuelDelivery[]
+ sellingPrices StationFuelPrice[]
  events IngestionEvent[]
  @@unique([stationId,name])
 }
@@ -132,6 +138,8 @@ model IngestionEvent {
  transaction FuelTransaction?
  snapshot MeterSnapshot?
  tankReading TankStockReading?
+ delivery FuelDelivery?
+ sellingPrice StationFuelPrice?
  @@index([status,receivedAt])
 }
 model IntegrationConfiguration {
@@ -166,6 +174,7 @@ model FuelTank {
  reorderPercent Int @default(20)
  nozzles Nozzle[]
  readings TankStockReading[]
+ deliveries FuelDelivery[]
  createdAt DateTime @default(now())
  @@index([stationId])
 }
@@ -180,4 +189,43 @@ model TankStockReading {
  event IngestionEvent? @relation(fields:[eventId],references:[id])
  ingestedAt DateTime @default(now())
  @@index([tankId,recordedAt])
+}
+
+model FuelDelivery {
+ id String @id @default(cuid())
+ externalId String
+ stationId String
+ station Station @relation(fields:[stationId],references:[id])
+ productId String
+ product FuelProduct @relation(fields:[productId],references:[id])
+ tankId String?
+ tank FuelTank? @relation(fields:[tankId],references:[id])
+ sourceId String
+ source IngestionSource @relation(fields:[sourceId],references:[id])
+ eventId String @unique
+ event IngestionEvent @relation(fields:[eventId],references:[id])
+ litres Decimal @db.Decimal(18,3)
+ sellingPricePerLitre Decimal? @db.Decimal(14,2)
+ orderReference String?
+ receivedAt DateTime
+ ingestedAt DateTime @default(now())
+ @@unique([sourceId,externalId])
+ @@index([stationId,productId,receivedAt])
+}
+model StationFuelPrice {
+ id String @id @default(cuid())
+ externalId String
+ stationId String
+ station Station @relation(fields:[stationId],references:[id])
+ productId String
+ product FuelProduct @relation(fields:[productId],references:[id])
+ sourceId String
+ source IngestionSource @relation(fields:[sourceId],references:[id])
+ eventId String @unique
+ event IngestionEvent @relation(fields:[eventId],references:[id])
+ price Decimal @db.Decimal(14,2)
+ effectiveAt DateTime
+ ingestedAt DateTime @default(now())
+ @@unique([sourceId,externalId])
+ @@index([stationId,productId,effectiveAt])
 }

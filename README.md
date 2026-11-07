@@ -226,8 +226,39 @@ Notifications refresh every ten seconds and can be marked read; read state is st
 
 ## Fuel-first home
 
-The first page now contains only **Petrol**, **Diesel**, and **Kerosene** cards. Each opens that fuel's complete captured history by default, with date presets, custom dates, transaction pagination, daily totals, cumulative meters, and fuel-scoped CSV files. No stock/delivery banners or business-question widgets appear on the first page.
+The first page has horizontal **Petrol**, **Diesel**, and **Kerosene** tabs with an active underline, and branch-scoped starting-stock cards. Each opens that fuel's complete captured history by default, with date presets, custom dates, transaction pagination, daily totals, cumulative meters, and fuel-scoped CSV files. No stock/delivery banners or business-question widgets appear on the first page.
 
 **Ask** is a separate navigation item. Delivery/reorder messages remain in the notification drawer; selecting a stock message keeps it in that drawer. Daily-sale and sales-growth notifications open Transactions and Reports respectively. Global dataset exports remain on Reports.
 
 `/api/business?from=all&to=YYYY-MM-DD` starts at the station's earliest captured transaction instead of silently defaulting to today. The same behaviour is implemented for the isolated browser dataset. Fuel names are displayed as Petrol/Diesel/Kerosene; Petroleum remains a compatible incoming alias for PMS.
+
+
+### Branch starting stock and pump prices
+
+“Total Meter” is the sum of the most recent **received delivery quantity per fuel** at the selected branch. Selecting a fuel shows only its latest received quantity. This is a starting-stock figure, not a lifetime cumulative dispenser reading. New receipts replace the starting quantity shown, preserve transaction history, and never reset physical meters. Expected selling value uses the latest observed branch pump price. Missing price observations remain unknown; national averages are not treated as live branch prices. The browser preview contains three branches with clearly documented sample prices, not verified live market prices.
+
+Authenticated provider endpoints (same bearer token as transaction ingestion):
+
+```http
+POST /api/ingestion/deliveries
+Authorization: Bearer <INGESTION_API_KEY>
+Content-Type: application/json
+```
+
+```json
+{"external_delivery_id":"DEL-001","station_id":"ST001","fuel_type":"Petrol","litres":"20000.000","received_at":"2026-11-07T09:00:00Z","status":"RECEIVED","selling_price_per_litre":"900.00","order_reference":"ORDER-001","source":"external-api"}
+```
+
+Only actual received deliveries qualify; planned orders do not change starting stock. Optional `tank_id` maps a receipt to physical stock reconciliation; optional `stock_after_delivery_litres` is a provider-measured post-delivery stock reading. A receipt quantity alone does not replace an observed tank level: remaining stock preserves carryover and adds mapped deliveries after the latest gauge reading. Unmapped receipts flag reconciliation review. Delivery-volume notifications trigger at 80% of the latest receipt volume dispensed and restart on the next receipt; this differs from a physical low-stock measurement.
+
+```http
+POST /api/ingestion/prices
+Authorization: Bearer <INGESTION_API_KEY>
+Content-Type: application/json
+```
+
+```json
+{"external_price_id":"PRICE-001","station_id":"ST001","fuel_type":"Petrol","price_per_litre":"950.00","effective_at":"2026-11-07T10:00:00Z","source":"external-api"}
+```
+
+Explicit pump transaction prices are also retained as branch price observations. Price changes revalue starting stock without rewriting historical sales. Both feeds validate registered branch/fuel mappings, audit raw payloads, reject conflicting IDs, and support replay through the ingestion event endpoint. No attendant entry forms are needed. Delivery records and starting-stock summaries are CSV exportable.
