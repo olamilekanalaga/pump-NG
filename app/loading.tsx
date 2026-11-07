@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="content"><p>Loading station workspace…</p><div className="cards section-gap">{[1,2,3,4].map(i=><div key={i} className="skeleton"/>)}</div></main>;}

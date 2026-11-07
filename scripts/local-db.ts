@@ -1,0 +1,3 @@
+import EmbeddedPostgres from 'embedded-postgres';
+import { existsSync } from 'node:fs';
+async function main(){const pg=new EmbeddedPostgres({databaseDir:'.pgdata',user:'fuel',password:'fuel',port:54329,persistent:true});if(!existsSync('.pgdata/PG_VERSION'))await pg.initialise();await pg.start();try{await pg.createDatabase('fuelstation');}catch{}console.log('Local PostgreSQL listening on 54329; data persists in .pgdata');for(const signal of ['SIGINT','SIGTERM'])process.on(signal,async()=>{await pg.stop();process.exit();});await new Promise(()=>{});}main().catch(e=>{console.error(e);process.exit(1);});
