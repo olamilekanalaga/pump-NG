@@ -1,4 +1,4 @@
 import type { Metadata } from 'next';
 import './globals.css';
-export const metadata:Metadata={title:'FuelStation Intelligence',description:'Fuel retail ingestion and operational intelligence'};
+export const metadata:Metadata={title:'PumpNG — Owner Intelligence',description:'Fuel retail ingestion and operational intelligence'};
 export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>;}

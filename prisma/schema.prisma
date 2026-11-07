@@ -30,6 +30,7 @@ model Station {
  sources IngestionSource[]
  configurations IntegrationConfiguration[]
  alerts OperationalAlert[]
+ tanks FuelTank[]
  createdAt DateTime @default(now())
 }
 model Dispenser {
@@ -49,6 +50,8 @@ model Nozzle {
  product FuelProduct @relation(fields:[productId],references:[id])
  snapshots MeterSnapshot[]
  transactions FuelTransaction[]
+ tankId String?
+ tank FuelTank? @relation(fields:[tankId],references:[id])
  @@unique([dispenserId,code])
 }
 model FuelProduct {
@@ -56,6 +59,7 @@ model FuelProduct {
  name String
  nozzles Nozzle[]
  prices FuelPriceHistory[]
+ tanks FuelTank[]
 }
 model FuelPriceHistory {
  id String @id @default(cuid())
@@ -127,6 +131,7 @@ model IngestionEvent {
  processedAt DateTime?
  transaction FuelTransaction?
  snapshot MeterSnapshot?
+ tankReading TankStockReading?
  @@index([status,receivedAt])
 }
 model IntegrationConfiguration {
@@ -141,10 +146,38 @@ model IntegrationConfiguration {
 }
 model OperationalAlert {
  id String @id @default(cuid())
+ alertKey String? @unique
  stationId String
  station Station @relation(fields:[stationId],references:[id])
  type String
  message String
  resolved Boolean @default(false)
  createdAt DateTime @default(now())
+}
+
+model FuelTank {
+ id String @id
+ stationId String
+ station Station @relation(fields:[stationId],references:[id])
+ name String
+ productId String
+ product FuelProduct @relation(fields:[productId],references:[id])
+ capacityLitres Decimal @db.Decimal(18,3)
+ reorderPercent Int @default(20)
+ nozzles Nozzle[]
+ readings TankStockReading[]
+ createdAt DateTime @default(now())
+ @@index([stationId])
+}
+model TankStockReading {
+ id String @id @default(cuid())
+ tankId String
+ tank FuelTank @relation(fields:[tankId],references:[id])
+ litres Decimal @db.Decimal(18,3)
+ recordedAt DateTime
+ source String
+ eventId String? @unique
+ event IngestionEvent? @relation(fields:[eventId],references:[id])
+ ingestedAt DateTime @default(now())
+ @@index([tankId,recordedAt])
 }

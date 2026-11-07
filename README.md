@@ -165,3 +165,47 @@ No hosted deployment is claimed by this repository. A local production build and
 ## Password-free browser demo
 
 Visit `/demo` for the isolated interactive demo. When `DATABASE_URL` is absent at build time, the homepage opens this demo automatically. No production authentication is bypassed: this mode uses IndexedDB in the visitor's own browser and never submits to production API routes. Each browser gets its own generated seven-day demonstration dataset. Simulator transactions, audit events, settings and meter snapshots persist across refreshes on that device. CSV exports are produced from those stored records. Offline/replay and idempotency run in the local demo adapter, not through the PostgreSQL REST ingestion service. The full PostgreSQL application and its authenticated endpoints are unchanged. Clear this site's browser storage to reset demo data; browser storage is not a hosted production database or a shared cross-device account.
+
+## Owner-first automatic operations
+
+The default screen is now **Owner overview**. Production access remains restricted to the administrator/owner session. There is no attendant account or sale-entry workflow, no payment-method labels, and no POS/payment reconciliation. Simulation controls are visible only in the isolated browser demo; the production navigation hides them. Owner configuration is separate from recorded sales, which cannot be edited in the interface.
+
+- Custom inclusive date ranges, Last 3 days, calendar month/year presets, daily litres and calculated naira value.
+- Starting, current and closing cumulative meter readings with missing-boundary and discrepancy checks.
+- Read-only incoming purchases, source provenance, automatic litre-to-naira conversion and period totals.
+- CSV exports for transactions, daily totals, meter reconciliation, pump totals, stock estimates, raw meter/tank readings, ingestion audits, products, price history and source metadata.
+- Business questions use deterministic calculations over available records. Sales/litres/product/pump/date questions and stock/ingestion exceptions are supported. This is not an unrestricted AI accountant: profit, customer identities, cash collections and staff attendance are explicitly unavailable without their own data sources.
+
+`GET /api/business?station=ST001&from=2026-11-01&to=2026-11-07` returns the owner report. Add `&export=transactions` (or `daily`, `meters`, `pumps`, `stock`, `readings`, `tankReadings`, `events`, `products`, `prices`, `sources`) for CSV. Transactions/daily/event records follow the date range; stock shows the latest current estimate. Raw readings and configuration exports contain all available station records.
+
+### Automatic pricing
+
+The authenticated transaction API accepts `price_per_litre` from the pump/provider when supplied. If omitted, it looks up the product price effective at `completed_at`. No configured historical price means the event is rejected; an attendant is never asked to supply it. The resolved price and calculated amount are stored on the transaction, so future price changes do not rewrite history. Supplied sale amounts must match decimal-safe litres × price, rounded half-up to kobo. This is calculated sales value, not evidence of collected money.
+
+### Tank feed and 80% depletion alerts
+
+A dispenser cumulative counter cannot determine the fuel left in a tank. The provider must supply tank capacity, an independently observed stock reading, and the nozzle mapping. The default reorder condition is **remaining stock ≤ 20% of tank capacity** (80% capacity depletion); it is not 80% of a dispenser's lifetime counter or a guaranteed calculation of the proportion of one particular delivery sold.
+
+Authenticated endpoint: `POST /api/ingestion/tank-stock` using the ingestion Bearer key.
+
+```json
+{
+  "external_event_id": "TANK-READING-000001",
+  "station_id": "ST001",
+  "tank_id": "ST001-PMS-TANK",
+  "tank_name": "PMS tank",
+  "fuel_type": "PMS",
+  "capacity_litres": "30000.000",
+  "stock_litres": "6000.000",
+  "recorded_at": "2026-11-07T12:30:00Z",
+  "source": "external-api",
+  "nozzle_ids": ["registered-database-nozzle-id"],
+  "reorder_percent": 20
+}
+```
+
+Use a current real timestamp and registered nozzle IDs belonging to the station/product. Events are audited and idempotent by source/external event ID; conflicting replay is rejected. Tank mapping cannot be silently reassigned. Every subsequent transaction subtracts its litres from the latest stock baseline. A replenishment requires a new observed stock reading; a delivery quantity alone is not treated as an independently measured tank level. Threshold alerts are persisted transactionally with ingestion, deduplicated per tank, and resolved when a new valid reading places stock above the threshold. Alerts are in-app; SMS/email/WhatsApp notifications are not configured.
+
+Current estimates flag missing readings/mappings, impossible balances, source outages and stale readings. They do not prove theft, account for unreported deliveries, or substitute for tank-gauge calibration and transaction completeness. Missing tank data is displayed as awaiting data rather than invented stock. Browser demo tanks are explicitly simulated, including a low-stock example and a simulated refill action.
+
+Apply `202611070003_tank_stock_alerts` before running the updated PostgreSQL backend. Run `npm test` for reporting/ingestion/inventory tests and `node --import tsx scripts/owner-check.ts` for the owner-workspace browser check. Set `DEMO_BASE_URL` to test the deployed `/demo` route.
