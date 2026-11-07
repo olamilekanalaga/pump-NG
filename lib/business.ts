@@ -1,6 +1,7 @@
 import { scaled,decimal,valueFromLitres } from './quantities';
 export { scaled,decimal,valueFromLitres } from './quantities';
 import { fuelName } from './fuels';
+import { isDeliveryQuestion,questionFuel } from './business-questions';
 import { deliverySummary,type DeliveryRecord,type DeliverySummary } from './delivery-data';
 /** Shared exact-decimal calculations for server records and the isolated browser demo. */
 export type BusinessSale={id:string;externalId:string;stationId:string;station:string;pump:string;nozzle:string;nozzleId:string;product:string;litres:string;price:string;sales:string;completedAt:string;ingestedAt:string;source:string;eventId:string;priceConfirmed?:boolean};
@@ -39,17 +40,19 @@ export function answerBusiness(question:string,report:BusinessReport){
  if(!q)return 'Ask about sales, litres, pumps, meters or stock.';
  if(/profit|customer|attendance|salary|expense|bank balance|theft/.test(q))return 'Unavailable from pump records.';
  if(/\bpos\b|card|cash|transfer|collection|settlement/.test(q))return 'Payment collections are not tracked.';
+ if(isDeliveryQuestion(q)){const selected=questionFuel(q);return (selected?[selected]:['PMS','AGO','DPK']).map(product=>{const d=report.deliveryStates.find(d=>d.product===product);if(!d?.receivedAt)return `${fuelName(product)}: no received delivery recorded.`;return `${fuelName(product)} · since delivery ${new Date(d.receivedAt).toLocaleString('en-NG',{timeZone:'Africa/Lagos'})}: ${d.dispensedSince} L sold · ₦${d.salesSince} calculated sales · ${d.transactionCount} purchases.`;}).join('\n');}
  if(/stock|remaining|reorder|80%|tank/.test(q))return report.stocks.length?report.stocks.map(t=>`${t.name}: ${t.remaining??'unknown'} L remaining · ${t.reorder?'REORDER':t.needsReview?'Check readings':'Stock available'}`).join('\n'):'Awaiting tank readings and nozzle mapping.';
  if(/error|reject|offline|queued/.test(q))return `${coverage}: ${report.events.filter(e=>e.status==='REJECTED').length} rejected · ${report.events.filter(e=>e.status==='QUEUED').length} queued.`;
  const pumpMatch=q.match(/\bp(?:ump)?\s*0?(\d+)\b/),nozzleMatch=q.match(/\bn(?:ozzle)?\s*0?(\d+)\b/);
  const pump=pumpMatch?`P${pumpMatch[1].padStart(2,'0')}`:null,nozzle=nozzleMatch?`N${nozzleMatch[1].padStart(2,'0')}`:null;
- const fuel=/\bpms\b|petrol|petroleum/.test(q)?'PMS':/\bago\b|diesel/.test(q)?'AGO':/\bdpk\b|kerosene/.test(q)?'DPK':null;
+ const fuel=questionFuel(q);
+ const today=localToday(),todayStart=period(today,today).start;const requested=[...(/\btoday\b/.test(q)?[{label:'Today',start:todayStart}]:[]),...(/(?:last|past) (?:7|seven) days/.test(q)?[{label:'Last 7 days',start:todayStart-6*86400000}]:[]),...(/all[- ]time|in all|and all|overall|all records/.test(q)?[{label:'All recorded history',start:0}]:[])];if(requested.length>1){return requested.map(p=>{const records=report.transactions.filter(t=>(!fuel||t.product===fuel)&&Date.parse(t.completedAt)>=p.start&&Date.parse(t.completedAt)<=Date.now());return `${p.label}${fuel?` · ${fuelName(fuel)}`:''}: ${sum(records,'litres')} L · ₦${sum(records,'sales')} calculated sales.`;}).join('\n');}
  if(pump&&!report.pumpTotals.some(p=>p.pump===pump))return `No records for ${pump}.`;
  const rows=report.transactions.filter(t=>(!fuel||t.product===fuel)&&(!pump||t.pump===pump)&&(!nozzle||t.nozzle===nozzle));
  if(/meter|opening|starting|closing/.test(q)){const meters=report.meters.filter(m=>(!pump||m.pump===pump)&&(!nozzle||m.nozzle===nozzle)&&(!fuel||m.product===fuel));return meters.length?meters.map(m=>`${m.pump}/${m.nozzle}: opening ${m.opening??'missing'} L · current ${m.current??'missing'} L · sold ${m.transactionLitres} L`).join('\n'):'No meter readings.';}
  if(/price|per litre|per liter/.test(q)){const effective=report.prices.filter(p=>(!fuel||p.productId===fuel)&&Date.parse(String(p.effectiveAt))<period(report.from,report.to).end).sort((a,b)=>String(b.effectiveAt).localeCompare(String(a.effectiveAt)));const products=[...new Set(effective.map(p=>String(p.productId)))];return products.length?products.map(id=>`${fuelName(id)}: ₦${effective.find(p=>p.productId===id)!.price}/L`).join('\n'):'No price recorded for this period.';}
  if(/top|best|highest|most/.test(q)){const ranked=report.pumpTotals.map(p=>{const r=report.transactions.filter(t=>t.pump===p.pump&&(!fuel||t.product===fuel));return {...p,litres:sum(r,'litres'),sales:sum(r,'sales'),transactions:r.length};}).sort((a,b)=>scaled(a.sales,2)>scaled(b.sales,2)?-1:scaled(a.sales,2)<scaled(b.sales,2)?1:0);return ranked.length?`${coverage}: ${ranked[0].pump} leads with ₦${ranked[0].sales} · ${ranked[0].litres} L.`:'No pump records.';}
  if(/average|avg/.test(q)){if(!rows.length)return 'No purchases recorded.';const n=BigInt(rows.length);return `${coverage}: average purchase ${decimal((scaled(sum(rows,'litres'))+n/2n)/n)} L · ₦${decimal((scaled(sum(rows,'sales'),2)+n/2n)/n,2)}.`;}
- if(/sales|sold|litre|liter|revenue|transaction|purchase|pump|petrol|pms|ago|diesel/.test(q))return `${coverage}${fuel?` · ${fuelName(fuel)}`:''}${pump?` · ${pump}`:''}${nozzle?`/${nozzle}`:''}: ${rows.length} purchases · ${sum(rows,'litres')} L · ₦${sum(rows,'sales')} calculated sales.`;
+ if(/sales|sold|litre|liter|revenue|transaction|purchase|pump|petrol|pms|ago|diesel|kerosene|make|made|earn|turnover|how much/.test(q))return `${coverage}${fuel?` · ${fuelName(fuel)}`:''}${pump?` · ${pump}`:''}${nozzle?`/${nozzle}`:''}: ${rows.length} purchases · ${sum(rows,'litres')} L · ₦${sum(rows,'sales')} calculated sales.`;
  return 'Available: sales, litres, pumps, meters, prices, stock and feed errors.';
 }

@@ -293,3 +293,15 @@ Meters now use the same visible horizontal and vertical grid as Reports. Pump re
 ### Home view tabs
 
 Home defaults to Fuel balances, with Activity as a second underlined tab in the same page. The activity ledger is rendered only when selected; switching views preserves the chosen dates and activity filters. Both tabs support arrow-key navigation. Bottom navigation is Home, Meters, Ask, Reports, Settings.
+
+### Compact controls, report tabs, charts and Ask
+
+The branch selector and date picker share one row on Home. Manual refresh buttons and the owner/data-refresh footer text have been removed; background polling continues.
+
+Reports now separates Sales, Pumps, Hoses and Readings into individual tabs. Sales contains one line chart of recorded naira sales, with compact 24H / 7D / 30D controls and All / P / D / K fuel filters (Petrol, Diesel, Kerosene). 24H is a rolling 24-hour window for today, or the selected whole historical day. 7D/30D are Nigerian calendar days ending on the selected day, with today partial to the latest refresh. Chart bucket totals use exact decimal arithmetic; numeric conversion is only for plotting. CSV exports match the selected chart buckets and fuel. Missing sale events cannot be inferred from a chart; reconciliation remains in Readings.
+
+Notification-category switches have been removed from Settings. The notification bell always shows reorder, daily-sales and sales-growth alerts; old saved category flags do not suppress these messages. Motion and compact-table preferences remain available.
+
+Ask supports everyday sales wording such as “How much did we make today?”, last 7 days, all-time sales and fuel-specific quantities. “Since we filled/full/refilled the tank” uses the latest recorded received delivery separately per fuel, with litres, historical calculated sale value and purchase count. A new received delivery restarts this cycle without erasing history. Missing delivery records are explicit; no refill is inferred from a cumulative pump counter. Ask answers are station-scoped and clear when switching branches. “Make” means calculated sales, not profit or settled payment collections.
+
+Verification includes `scripts/reports-chart-check.ts`, `scripts/ask-check.ts`, exact range/fuel/bucket tests, and received-delivery question tests.
