@@ -161,3 +161,7 @@ A hosted PostgreSQL database is required. The local `.pgdata` server cannot be u
 7. Rotate demonstration credentials before inviting users. Add per-user identity/RBAC, tenant-scoped API keys, durable ingress rate limiting, login brute-force protection, monitoring, database backups, retention and load testing before a public production launch.
 
 No hosted deployment is claimed by this repository. A local production build and database-backed/browser acceptance checks can be run with the commands above.
+
+## Password-free browser demo
+
+Visit `/demo` for the isolated interactive demo. When `DATABASE_URL` is absent at build time, the homepage opens this demo automatically. No production authentication is bypassed: this mode uses IndexedDB in the visitor's own browser and never submits to production API routes. Each browser gets its own generated seven-day demonstration dataset. Simulator transactions, audit events, settings and meter snapshots persist across refreshes on that device. CSV exports are produced from those stored records. Offline/replay and idempotency run in the local demo adapter, not through the PostgreSQL REST ingestion service. The full PostgreSQL application and its authenticated endpoints are unchanged. Clear this site's browser storage to reset demo data; browser storage is not a hosted production database or a shared cross-device account.
