@@ -320,6 +320,14 @@ The app does not connect demo pumps, bank accounts, POS terminals or payments. E
 
 New endpoints: authenticated/controller-scoped `GET/POST /api/controller/pricing` and `GET/POST /api/controller/shift`. Apply `202611070006_controller_prices_shifts` with `npm run db:migrate` for the PostgreSQL app. Price history and shift records persist across reloads in both storage modes.
 
-Ask now presents general sales questions as a column table: Petrol, Diesel, Kerosene and Total, with litres, calculated sales and purchase rows. Home/Meters headings and the top-right profile button are removed; Profile remains under Settings. Motion adds restrained card depth and press feedback, respecting the saved setting and reduced-motion preference.
+Ask now presents general sales questions as a column table: Petrol, Diesel, Kerosene and Total, with litres, calculated sales and purchase rows. Home/Meters headings and the top-right profile button are removed; Profile remains under Settings. Motion adds restrained card depth and press feedback, automatically respecting the device reduced-motion preference.
 
 Validation: valuation unit tests, controller/permission/database integration tests, `scripts/controller-check.ts` and the existing ingestion suite. Run `DEMO_BASE_URL=<local-or-live-url> node --import tsx scripts/controller-check.ts` for the owner/controller browser journey.
+
+### Reports wallets, delivery breakdown and themes
+
+Reports starts with a wallet selector and date control. **Overall wallet** combines only the authorised company branches; individual wallets isolate their branch. Pump/hose identifiers remain scoped by branch in company tables and CSV. Overall Shift is read-only; choose a branch to enter or reconcile its shifts.
+
+The first Reports card is **Latest received deliveries**: the latest received delivery of each fuel per branch, as of the selected report date. It is neither opening inventory nor cumulative dispenser volume. The visible fuel breakdown shows litres received × the branch selling price effective at that date. Lekki starts with Petrol 20,000 L × ₦900 = ₦18m, Diesel 30,000 L × ₦1,200 = ₦36m, Kerosene 50,000 L × ₦1,000 = ₦50m: 100,000 L and ₦104m. Overall sums branch valuations; mixed prices are labelled per branch rather than applying a single rate. This expected selling value is separate from historical sales and actual receipts.
+
+**Settings → Preferences → Theme** saves Light or Dark in the existing account persistence layer. A local cache applies the chosen theme before the page paints. Motion is automatic; the old Motion switch is removed and OS reduced-motion remains supported. Price history has row and column grid lines. Browser checks: `scripts/wallet-reports-check.ts` and `scripts/theme-check.ts` (mobile journeys, saved theme, and rendered text contrast across the primary screens).
