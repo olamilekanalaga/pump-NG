@@ -10,6 +10,7 @@ model Organisation {
  name String
  stations Station[]
  users User[]
+ profile WorkspaceProfile?
  createdAt DateTime @default(now())
 }
 model User {
@@ -228,4 +229,14 @@ model StationFuelPrice {
  ingestedAt DateTime @default(now())
  @@unique([sourceId,externalId])
  @@index([stationId,productId,effectiveAt])
+}
+
+model WorkspaceProfile {
+ organisationId String @id
+ organisation Organisation @relation(fields:[organisationId],references:[id])
+ displayName String @default("Owner")
+ contactEmail String @default("")
+ phone String @default("")
+ preferences Json
+ updatedAt DateTime @updatedAt
 }

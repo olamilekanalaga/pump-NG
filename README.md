@@ -262,3 +262,14 @@ Content-Type: application/json
 ```
 
 Explicit pump transaction prices are also retained as branch price observations. Price changes revalue starting stock without rewriting historical sales. Both feeds validate registered branch/fuel mappings, audit raw payloads, reject conflicting IDs, and support replay through the ingestion event endpoint. No attendant entry forms are needed. Delivery records and starting-stock summaries are CSV exportable.
+
+
+### Profile, preferences and fixed navigation
+
+The top-right initials open Profile. Name, contact email and phone save through authenticated `GET/POST /api/account`; contact email does not change sign-in credentials. This remains a single owner workspace using the existing shared administrator session, not a new multi-user authentication system. `WorkspaceProfile` stores company owner contact details and preferences in PostgreSQL; apply migrations before starting the database-backed app. In the public browser preview, the same account records persist in IndexedDB.
+
+Settings separates Preferences from Branch & pumps. Motion, compact report rows and three in-app notification categories are functional saved preferences; they do not change pump data, price feeds, ingestion, or underlying operational alerts. Operating currency remains NGN and the business reporting timezone remains Africa/Lagos.
+
+The page has a dedicated scroll region between the header and an opaque bottom navigation dock. Reports use explicit horizontal and vertical cell borders. `scripts/account-check.ts` verifies profile saves across reloads, preferences and notification effects, report grid lines and the non-overlapping navigation boundary. `scripts/account-api-check.ts` checks API authentication, persistence, validation and cross-site request rejection against a local database-backed server; it restores the original profile afterwards.
+
+Reference patterns: [Linear profile](https://linear.app/docs/profile), [Linear preferences](https://linear.app/docs/account-preferences), and [Vercel account/workspace dashboard structure](https://vercel.com/academy/optimize-your-vercel-account/tour-the-dashboard). These inform information grouping, not copied screens or a claim of feature parity.
