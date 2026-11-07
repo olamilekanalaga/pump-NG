@@ -223,3 +223,11 @@ The notification bell shows:
 - Today's recorded litres and calculated naira sales, independently of the dashboard's date filter.
 
 Notifications refresh every ten seconds and can be marked read; read state is stored per station on the device. Selecting a message opens the owner overview. `GET /api/notifications?station=ST001` requires the owner session in the PostgreSQL application. The browser preview uses the same notification calculations over its isolated records. Notification CSV export is available alongside the other datasets. These are in-app messages, not external email/SMS delivery.
+
+## Fuel-first home
+
+The first page now contains only **Petrol**, **Diesel**, and **Kerosene** cards. Each opens that fuel's complete captured history by default, with date presets, custom dates, transaction pagination, daily totals, cumulative meters, and fuel-scoped CSV files. No stock/delivery banners or business-question widgets appear on the first page.
+
+**Ask** is a separate navigation item. Delivery/reorder messages remain in the notification drawer; selecting a stock message keeps it in that drawer. Daily-sale and sales-growth notifications open Transactions and Reports respectively. Global dataset exports remain on Reports.
+
+`/api/business?from=all&to=YYYY-MM-DD` starts at the station's earliest captured transaction instead of silently defaulting to today. The same behaviour is implemented for the isolated browser dataset. Fuel names are displayed as Petrol/Diesel/Kerosene; Petroleum remains a compatible incoming alias for PMS.
