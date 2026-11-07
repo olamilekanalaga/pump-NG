@@ -1,0 +1,3 @@
+import { equal,sessionToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
+export async function POST(request:Request){try{const {password}=await request.json();if(typeof password!=='string'||password.length>1024)return Response.json({error:'Invalid password'},{status:400});if(!process.env.ADMIN_PASSWORD||!equal(password,process.env.ADMIN_PASSWORD))return Response.json({error:'Invalid password'},{status:401});(await cookies()).set('fsi_session',sessionToken(),{httpOnly:true,sameSite:'strict',secure:process.env.NODE_ENV==='production',maxAge:28800,path:'/'});return Response.json({ok:true});}catch{return Response.json({error:'Invalid login request'},{status:400});}}

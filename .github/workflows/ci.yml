@@ -1,0 +1,30 @@
+name: Application checks
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: fuel
+          POSTGRES_PASSWORD: fuel
+          POSTGRES_DB: fuelstation
+        ports: ['54329:5432']
+        options: >-
+          --health-cmd "pg_isready -U fuel -d fuelstation"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: cp .env.example .env
+      - run: npm run db:migrate
+      - run: npm run db:seed
+      - run: npm test
+      - run: npm run build

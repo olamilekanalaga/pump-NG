@@ -1,0 +1,150 @@
+generator client {
+ provider = "prisma-client-js"
+}
+datasource db {
+ provider = "postgresql"
+ url = env("DATABASE_URL")
+}
+model Organisation {
+ id String @id
+ name String
+ stations Station[]
+ users User[]
+ createdAt DateTime @default(now())
+}
+model User {
+ id String @id @default(cuid())
+ email String @unique
+ organisationId String
+ organisation Organisation @relation(fields:[organisationId],references:[id])
+ role String @default("ADMIN")
+ createdAt DateTime @default(now())
+}
+model Station {
+ id String @id
+ name String
+ location String
+ organisationId String
+ organisation Organisation @relation(fields:[organisationId],references:[id])
+ dispensers Dispenser[]
+ sources IngestionSource[]
+ configurations IntegrationConfiguration[]
+ alerts OperationalAlert[]
+ createdAt DateTime @default(now())
+}
+model Dispenser {
+ id String @id @default(cuid())
+ code String
+ stationId String
+ station Station @relation(fields:[stationId],references:[id])
+ nozzles Nozzle[]
+ @@unique([stationId,code])
+}
+model Nozzle {
+ id String @id @default(cuid())
+ code String
+ dispenserId String
+ dispenser Dispenser @relation(fields:[dispenserId],references:[id])
+ productId String
+ product FuelProduct @relation(fields:[productId],references:[id])
+ snapshots MeterSnapshot[]
+ transactions FuelTransaction[]
+ @@unique([dispenserId,code])
+}
+model FuelProduct {
+ id String @id
+ name String
+ nozzles Nozzle[]
+ prices FuelPriceHistory[]
+}
+model FuelPriceHistory {
+ id String @id @default(cuid())
+ productId String
+ product FuelProduct @relation(fields:[productId],references:[id])
+ price Decimal @db.Decimal(14,2)
+ effectiveAt DateTime
+ createdAt DateTime @default(now())
+ @@unique([productId,effectiveAt])
+}
+model MeterSnapshot {
+ id String @id @default(cuid())
+ externalId String?
+ sourceId String?
+ source IngestionSource? @relation(fields:[sourceId],references:[id])
+ eventId String? @unique
+ event IngestionEvent? @relation(fields:[eventId],references:[id])
+ nozzleId String
+ nozzle Nozzle @relation(fields:[nozzleId],references:[id])
+ cumulativeLitres Decimal @db.Decimal(18,3)
+ recordedAt DateTime
+ kind String
+ origin String @default("simulator")
+ exception String?
+ @@index([nozzleId,recordedAt])
+ @@unique([sourceId,externalId])
+}
+model FuelTransaction {
+ id String @id @default(cuid())
+ externalId String
+ nozzleId String
+ nozzle Nozzle @relation(fields:[nozzleId],references:[id])
+ sourceId String
+ source IngestionSource @relation(fields:[sourceId],references:[id])
+ eventId String @unique
+ event IngestionEvent @relation(fields:[eventId],references:[id])
+ litres Decimal @db.Decimal(14,3)
+ pricePerLitre Decimal @db.Decimal(14,2)
+ saleValue Decimal @db.Decimal(18,2)
+ startedAt DateTime?
+ completedAt DateTime
+ ingestedAt DateTime @default(now())
+ @@unique([sourceId,externalId])
+ @@index([completedAt,nozzleId])
+}
+model IngestionSource {
+ id String @id @default(cuid())
+ stationId String
+ station Station @relation(fields:[stationId],references:[id])
+ name String
+ mode String @default("SIMULATION")
+ online Boolean @default(true)
+ lastSuccessAt DateTime?
+ transactions FuelTransaction[]
+ snapshots MeterSnapshot[]
+ events IngestionEvent[]
+ @@unique([stationId,name])
+}
+model IngestionEvent {
+ id String @id @default(cuid())
+ sourceId String?
+ source IngestionSource? @relation(fields:[sourceId],references:[id])
+ raw Json
+ status String @default("RECEIVED")
+ error String?
+ attempts Int @default(1)
+ replayOf String?
+ receivedAt DateTime @default(now())
+ processedAt DateTime?
+ transaction FuelTransaction?
+ snapshot MeterSnapshot?
+ @@index([status,receivedAt])
+}
+model IntegrationConfiguration {
+ id String @id @default(cuid())
+ stationId String
+ station Station @relation(fields:[stationId],references:[id])
+ adapter String
+ mode String
+ credentialReference String?
+ updatedAt DateTime @updatedAt
+ @@unique([stationId,adapter])
+}
+model OperationalAlert {
+ id String @id @default(cuid())
+ stationId String
+ station Station @relation(fields:[stationId],references:[id])
+ type String
+ message String
+ resolved Boolean @default(false)
+ createdAt DateTime @default(now())
+}

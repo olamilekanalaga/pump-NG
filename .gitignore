@@ -1,0 +1,11 @@
+node_modules
+.next
+.env
+.env.local
+.pgdata
+playwright-report
+test-results
+*.log
+*.tsbuildinfo
+overview.png
+mobile.png
