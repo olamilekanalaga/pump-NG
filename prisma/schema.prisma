@@ -24,6 +24,7 @@ model User {
  createdAt DateTime @default(now())
 }
 model Station {
+ dailyFuelChecks DailyFuelCheck[]
  id String @id
  name String
  location String
@@ -265,4 +266,14 @@ model ShiftReconciliation {
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
  @@unique([stationId,startAt,endAt])
+}
+
+model DailyFuelCheck {
+ id String @id @default(cuid())
+ stationId String
+ station Station @relation(fields:[stationId],references:[id])
+ date String
+ state Json
+ updatedAt DateTime @updatedAt
+ @@unique([stationId,date])
 }

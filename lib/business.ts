@@ -12,7 +12,7 @@ export type BusinessInput={station:{id:string;name:string};deliveries?:DeliveryR
 export const localToday=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Lagos'});
 export function period(from:string,to:string){for(const d of [from,to])if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||new Date(d+'T12:00:00Z').toISOString().slice(0,10)!==d)throw new Error('Invalid date');const start=Date.parse(from+'T00:00:00+01:00'),end=Date.parse(to+'T00:00:00+01:00')+86400000;if(start>=end)throw new Error('Start date must not follow end date');if(end-start>3660*86400000)throw new Error('Choose a period of ten years or less');return {start,end};}
 const sum=(rows:BusinessSale[],key:'litres'|'sales')=>decimal(rows.reduce((s,t)=>s+scaled(t[key],key==='litres'?3:2),0n),key==='litres'?3:2);
-export type BusinessNotification={id:string;kind:'STOCK'|'SALES_GROWTH'|'DAILY_SALES';title:string;message:string;createdAt:string};
+export type BusinessNotification={id:string;kind:'STOCK'|'SALES_GROWTH'|'DAILY_SALES'|'RECONCILIATION';title:string;message:string;createdAt:string;reportDate?:string;stationId?:string};
 export function businessNotifications(transactions:BusinessSale[],stocks:{id:string;name:string;product:string;remaining:string|null;reorder:boolean;reorderPercent:number}[],now=new Date(),deliveries:DeliverySummary[]=[]):BusinessNotification[]{
  const today=now.toLocaleDateString('en-CA',{timeZone:'Africa/Lagos'}),start=period(today,today).start;
  const current=transactions.filter(t=>Date.parse(t.completedAt)>=start&&Date.parse(t.completedAt)<=now.getTime());
