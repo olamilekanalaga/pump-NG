@@ -1,1 +1,1 @@
-{"crons":[{"path":"/api/cron/reconciliation","schedule":"10 0 * * *"}]}
+{"crons":[{"path":"/api/cron/reconciliation","schedule":"10 0 * * *"}],"framework":"nextjs"}
